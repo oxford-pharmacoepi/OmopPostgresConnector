@@ -71,7 +71,6 @@ If your connection is successful you should be able to run the following lines o
 library(DBI)
 library(RPostgres)
 library(dplyr)
-library(dbplyr)
 
 # create connection
 con <- dbConnect(

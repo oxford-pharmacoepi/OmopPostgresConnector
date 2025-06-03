@@ -11,9 +11,13 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 URL: https://oxford-pharmacoepi.github.io/OmopPostgresConnector/
 Imports: 
+    cli,
     DBI,
+    omopgenerics,
+    rlang,
     RPostgres
 Suggests: 
+    dplyr,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
