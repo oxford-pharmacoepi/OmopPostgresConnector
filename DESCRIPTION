@@ -14,7 +14,8 @@ Imports:
     cli,
     DBI,
     omopgenerics,
-    rlang
+    rlang,
+    stringr
 Suggests: 
     dplyr,
     knitr,
