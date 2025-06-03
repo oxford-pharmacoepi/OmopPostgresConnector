@@ -1,0 +1,126 @@
+---
+title: "Set up your environment to contribute"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{setup_developers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Set up
+
+In this vignette we explain how to set up your environment to be able to contribute to the package. **OmopPostgresConnector** is an open-source package open for contributions, if you want to contribute you will need to be able to run the tests locally. To do so you need a local postgres instance with the following credentials:
+
+```
+POSTGRES_USER=omop_postgres_connector
+POSTGRES_PASSWORD=omopverse
+POSTGRES_DB=omop_test
+```
+
+The GitHub actions run on a container where these [credentials](https://github.com/oxford-pharmacoepi/OmopPostgresConnector/blob/main/.github/workflows/postgres.yml#L13-L15) have already been created, you can rely on the GitHub actions to run tests there.
+
+There are several ways to have this:
+
+### Install Postgres and create manually a database
+
+1. [Download postgres](https://www.postgresql.org/download/)
+2. Set up your installer and install Postgre and pgAdmin 4. Please use PORT 5432, if port 5432 is not available create an environment variable `OMOP_POSTGRES_CONNECTOR_PORT` with the port that you are using:
+```
+OMOP_POSTGRES_CONNECTOR_PORT=5432
+```
+3. Create your a user. Please use USER: omop_postgres_connector and PASSWORD: omopverse; if this is not possible please create environment variables to provide the credentials:
+```
+OMOP_POSTGRES_CONNECTOR_USER=omop_postgres_connector
+OMOP_POSTGRES_CONNECTOR_PASSWORD=omopverse
+```
+
+4. Create a database. Please use DATABASE: omop_test; if this is not possible please create environment variables to provide the credentials:
+```
+OMOP_POSTGRES_CONNECTOR_DB=omop_test
+```
+
+If you successfully completed the 4 steps please go to [Check the set up](add link).
+
+### Install Postgres via docker
+
+1. [Download docker desktop](https://www.docker.com/products/docker-desktop)
+
+2. Run the following code from the terminal:
+
+```
+docker run --name local-postgres \
+  -e POSTGRES_USER=omop_postgres_connector \
+  -e POSTGRES_PASSWORD=omopverse \
+  -e POSTGRES_DB=omop_test \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+## Check the set up
+
+If your connection is successful you should be able to run the following lines of code without any error:
+
+```{r}
+library(DBI)
+library(RPostgres)
+library(dplyr)
+library(dbplyr)
+
+# create connection
+con <- dbConnect(
+  drv = Postgres(),
+  dbname = Sys.getenv("OMOP_POSTGRES_CONNECTOR_DB", "omop_test"),
+  host = "localhost",
+  port = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PORT", "5432"),
+  user = Sys.getenv("OMOP_POSTGRES_CONNECTOR_USER", "omop_postgres_connector"),
+  password = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PASSWORD", "omopverse")
+)
+con
+
+# create new schema
+dbExecute(conn = con, statement = "CREATE SCHEMA opc_main;")
+dbWriteTable(conn = con, name = Id(schema = "opc_main", table = "test"), value = cars)
+tbl(con, I("opc_main.test"))
+dbExecute(con, "DROP SCHEMA opc_main CASCADE;")
+
+# create new database
+dbExecute(conn = con, statement = "CREATE DATABASE opc_test;")
+dbDisconnect(conn = con)
+
+# connect to new database
+con <- dbConnect(
+  drv = Postgres(),
+  dbname = "opc_test",
+  host = "localhost",
+  port = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PORT", "5432"),
+  user = Sys.getenv("OMOP_POSTGRES_CONNECTOR_USER", "omop_postgres_connector"),
+  password = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PASSWORD", "omopverse")
+)
+
+dbExecute(conn = con, statement = "CREATE SCHEMA opc_main;")
+dbWriteTable(conn = con, name = Id(schema = "opc_main", table = "test"), value = cars)
+tbl(con, I("opc_main.test"))
+dbDisconnect(conn = con)
+
+# delete created database
+con <- dbConnect(
+  drv = Postgres(),
+  dbname = Sys.getenv("OMOP_POSTGRES_CONNECTOR_DB", "omop_test"),
+  host = "localhost",
+  port = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PORT", "5432"),
+  user = Sys.getenv("OMOP_POSTGRES_CONNECTOR_USER", "omop_postgres_connector"),
+  password = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PASSWORD", "omopverse")
+)
+dbExecute(con, "DROP DATABASE opc_test;")
+dbDisconnect(conn = con)
+
+```
+
+Now that you are ready try cloning the code locally and run `devtools::check()` if no error arises you are all set up.

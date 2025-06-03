@@ -15,13 +15,32 @@ permissions: read-all
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
+
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: omop_postgres_connector
+          POSTGRES_PASSWORD: omopverse
+          POSTGRES_DB: omop_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U myuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
 

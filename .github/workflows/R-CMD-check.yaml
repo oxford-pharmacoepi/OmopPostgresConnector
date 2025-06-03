@@ -15,6 +15,21 @@ jobs:
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: omop_postgres_connector
+          POSTGRES_PASSWORD: omopverse
+          POSTGRES_DB: omop_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U myuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     strategy:
       fail-fast: false
       matrix:

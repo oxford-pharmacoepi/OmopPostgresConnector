@@ -1,4 +1,9 @@
 
+
+getJobs <- function(con, user = NULL) {
+
+}
+
 #' Cancel a Postgres job.
 #'
 #' @param src It can either be a cdm_reference, a postgres_source or a
