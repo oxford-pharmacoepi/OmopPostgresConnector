@@ -2,6 +2,11 @@
 
 S3method(cancelJob,PqConnection)
 S3method(cancelJob,cdm_reference)
+S3method(cancelJob,pq_cdm)
+S3method(getJobs,PqConnection)
+S3method(getJobs,cdm_reference)
+S3method(getJobs,pq_cdm)
 export(cancelJob)
+export(getJobs)
 importFrom(rlang,.data)
 importFrom(rlang,.env)
