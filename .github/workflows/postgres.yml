@@ -1,0 +1,51 @@
+name: Test with PostgreSQL
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: mypassword
+          POSTGRES_DB: mytestdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U myuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R dependencies
+        run: |
+          install.packages(c("DBI", "RPostgres"))
+
+      - name: Create another database from R
+        run: |
+          library(DBI)
+          con <- dbConnect(RPostgres::Postgres(),
+            dbname = "postgres",
+            host = "localhost",
+            port = 5432,
+            user = "myuser",
+            password = "mypassword"
+          )
+          dbExecute(con, "CREATE DATABASE my_other_db;")
+          dbDisconnect(con)
+        shell: Rscript {0}
+
+      - name: Run tests
+        run: |
+          # Your testing logic here
+        shell: Rscript {0}
