@@ -30,6 +30,7 @@ jobs:
       - name: Install R dependencies
         run: |
           install.packages(c("DBI", "RPostgres"))
+        shell: Rscript {0}
 
       - name: Create another database from R
         run: |
@@ -45,7 +46,3 @@ jobs:
           dbDisconnect(con)
         shell: Rscript {0}
 
-      - name: Run tests
-        run: |
-          # Your testing logic here
-        shell: Rscript {0}
