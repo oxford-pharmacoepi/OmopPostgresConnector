@@ -35,7 +35,7 @@ postgresSource <- function(con,
 }
 
 # methods
-insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = FALSE) {
+insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = FALSE, indexes = TRUE) {
   table <- dplyr::as_tibble(table)
 
 }
