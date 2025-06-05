@@ -35,14 +35,120 @@ postgresSource <- function(con,
 }
 
 # methods
-insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = FALSE, indexes = TRUE) {
+#' @export
+insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = FALSE) {
+  # initial checks
+  omopgenerics::assertCharacter(name, length = 1)
   table <- dplyr::as_tibble(table)
+  omopgenerics::assertLogical(overwrite, length = 1)
+  omopgenerics::assertLogical(temporary, length = 1)
 
+  # check overwrite
+  if (overwrite & name %in% listTables(src = cdm, type = "write")) {
+    dropTable(src = cdm, type = "write", name = name)
+  }
+
+  # write table
+  writeTable(src = cdm, name = name, value = table, type = "write")
+
+  # indexes?
+
+  readTable(src = cdm, name = name, type = "write")
 }
-# dropSourceTable.pq_cdm
-# listSourceTables.pq_cdm
+
+#' @export
+dropSourceTable.pq_cdm <- function(cdm, name) {
+  for (nm in name) {
+    dropTable(src = cdm, type = "write", name = nm)
+  }
+  return(cdm)
+}
+
+#' @importFrom dplyr compute
 # compute.pq_cdm
 
+#' @export
+listSourceTables.pq_cdm <- function(cdm) {
+  listTables(src = cdm, type = "write")
+}
+
+# cdmDisconnect.pq_cdm
+# cdmTableFromSource.pq_cdm
+
+#' @export
+insertCdmTo.pq_cdm <- function(cdm, to) {
+  # identify table types
+  tables <- names(cdm)
+  tableType <- purrr::map(tables, \(nm) {
+    cl <- class(cdm[[nm]])
+    dplyr::case_when(
+      "omop_table" %in% class(x) ~ "omop_table",
+      "cohort_table" %in% class(x) ~ "cohort_table",
+      "achilles_table" %in% class(x) ~ "achilles_table",
+      .default = "other_table"
+    )
+  })
+
+  # insert cdm tables
+  omopTables <- tables[tableType == "omop_table"]
+  for (nm in omopTables) {
+    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "cdm")
+  }
+
+  # insert cohort tables
+  cohortTables <- tables[tableType == "cohort_table"]
+  for (nm in cohortTables) {
+    x <- dplyr::collect(cdm[[nm]])
+    writeTable(src = to, name = nm, value = x, type = "write")
+    writeTable(src = to, name = paste0(nm, "_set"), value = attr(x, "cohort_set"), type = "write")
+    writeTable(src = to, name = paste0(nm, "_attrition"), value = attr(x, "cohort_attrition"), type = "write")
+    writeTable(src = to, name = paste0(nm, "_codelist"), value = attr(x, "cohort_codelist"), type = "write")
+  }
+
+  # insert achilles tables
+  achillesTables <- tables[tableType == "achilles_table"]
+  for (nm in achillesTables) {
+    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "achilles")
+  }
+
+  # insert other tables
+  otherTables <- tables[tableType == "other_table"]
+  for (nm in otherTables) {
+    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "write")
+  }
+
+  cdm <- cdmFromPostgres(
+    con <- getCon(to),
+    cdmName = omopgenerics::cdmName(cdm),
+    cdmVersion = omopgenerics::cdmVersion(cdm),
+    cdmSchema = getSchema(to, "cdm"),
+    cdmPrefix = getPrefix(to, "cdm"),
+    writeSchema = getSchema(to, "write"),
+    writePrefix = getPrefix(to, "write"),
+    achillesSchema = getSchema(to, "achilles"),
+    achillesPrefix = getPrefix(to, "achilles"),
+    cohortTables = cohortTables
+  )
+
+  for (nm in otherTables) {
+    cdm[[nm]] <- readTable(src = to, name = nm, type = "write")
+  }
+
+  # do we want to add indexes?
+
+  return(cdm)
+}
+
+#' @export
+readSourceTable.pq_cdm <- function(cdm, name) {
+  readTable(src = cdm, name = name, type = "write")
+}
+
+dropTable <- function(src, type, name) {
+  name <- formatName(src = src, name = name, type = type)
+  st <- paste0("DROP TABLE ", name, ";")
+  DBI::dbExecute(conn = getCon(src = src), statement = st)
+}
 listTables <- function(src, type) {
   schema <- getSchema(src, type)
   prefix <- getPrefix(src, type)
@@ -52,7 +158,13 @@ listTables <- function(src, type) {
     WHERE table_schema = '", schema, "'",
     ifelse(prefix == "", ";", paste0(" AND table_name LIKE '", prefix, "%';"))
   )
-  DBI::dbGetQuery(conn = getCon(src), statement = st)
+  x <- DBI::dbGetQuery(conn = getCon(src), statement = st)$table_name
+  if (prefix != "") {
+    x <- x |>
+      stringr::str_replace(pattern = paste0("^", prefix), replacement = "") |>
+      purrr::keep(\(x) nchar(x) > 0)
+  }
+  return(x)
 }
 writeTable <- function(src, name, value, type) {
   DBI::dbWriteTable(
@@ -60,7 +172,6 @@ writeTable <- function(src, name, value, type) {
     name = formatName(src, name, type),
     value = value
   )
-  readTable(src = src, name = name, type = type)
 }
 readTable <- function(src, name, type) {
   dplyr::tbl(src = getCon(src), I(formatName(src, name, type))) |>

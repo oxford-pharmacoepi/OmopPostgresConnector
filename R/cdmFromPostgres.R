@@ -6,6 +6,8 @@ cdmFromPostgres <- function(con,
                             writeSchema = "results",
                             writePrefix = "",
                             achillesSchema = NULL,
-                            achillesPrefix = "") {
+                            achillesPrefix = "",
+                            cdmVersion = NULL,
+                            cohortTables = NULL) {
 
 }

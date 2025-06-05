@@ -14,11 +14,12 @@ Imports:
     cli,
     DBI,
     dbplyr,
+    dplyr,
     omopgenerics,
+    purrr,
     rlang,
     stringr
 Suggests: 
-    dplyr,
     knitr,
     rmarkdown,
     RPostgres,

@@ -4,14 +4,14 @@
 \alias{createIndexes}
 \title{Title}
 \usage{
-createIndexes(x, schema, table, index)
+createIndexes(x, schema, tableName, index)
 }
 \arguments{
 \item{x}{A PqConnection, cdm_reference, cdm_table or pq_cdm object.}
 
 \item{schema}{schema}
 
-\item{table}{table}
+\item{tableName}{tableName}
 
 \item{index}{index to create}
 }
