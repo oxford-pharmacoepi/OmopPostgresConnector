@@ -28,6 +28,13 @@ localPostgres <- function() {
   )
 }
 
+#' Create a postgres source object
+#'
+#' @inheritParams pqSourceDoc
+#'
+#' @return A <pq_cdm> source object
+#' @export
+#'
 postgresSource <- function(con,
                            cdmSchema = "public",
                            cdmPrefix = "",
@@ -63,7 +70,6 @@ postgresSource <- function(con,
   return(source)
 }
 
-# methods
 #' @export
 insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = FALSE) {
   # initial checks
@@ -94,15 +100,85 @@ dropSourceTable.pq_cdm <- function(cdm, name) {
 }
 
 #' @importFrom dplyr compute
-# compute.pq_cdm
+compute.pq_cdm <- function(x, name, temporary = FALSE, overwrite = TRUE, type = "write", ...) {
+  # get source
+  src <- attr(table, "tbl_source")
+  con <- getCon(src)
+
+  # get rendered sql
+  render <- as.character(dbplyr::sql_render(x))
+
+  # check if table must be temporary or permanent
+  if (temporary) {
+    name <- omopgenerics::uniqueTableName()
+    temp <- " TEMP"
+  } else {
+    name <- formatName(src = src, name = name, type = type)
+    temp <- ""
+  }
+
+  # check if intermediate table is needed
+  if (stringr::str_detect(string = render, pattern = name)) {
+    intermediate <- omopgenerics::uniqueTableName()
+    sql <- paste0("CREATE TEMP TABLE ", intermediate, " AS ", render, ";")
+    DBI::dbExecute(conn = con, statement = sql)
+    sql <- paste0("CREATE TABLE ", name, " AS SELECT * FROM ", intermediate, ";")
+    DBI::dbExecute(conn = con, statement = sql)
+    sql <- paste0("DROP TABLE IF EXISTS ", intermediate, ";")
+    DBI::dbExecute(conn = con, statement = sql)
+  } else {
+    sql <- paste0("CREATE", temp, " TABLE ", name, " AS ", render, ";")
+    DBI::dbExecute(conn = con, statement = sql)
+  }
+
+  # reference final table
+  dplyr::tbl(con, I(name))
+}
 
 #' @export
 listSourceTables.pq_cdm <- function(cdm) {
   listTables(src = cdm, type = "write")
 }
 
-# cdmDisconnect.pq_cdm
-# cdmTableFromSource.pq_cdm
+#' @export
+cdmDisconnect.pq_cdm <- function(cdm, ...) {
+  src <- omopgenerics::cdmSource(cdm)
+  con <- getCon(src)
+  DBI::dbDisconnect(conn = con)
+  invisible(TRUE)
+}
+
+#' @export
+cdmTableFromSource.pq_cdm <- function(src, value) {
+  # check it is not data.frame
+  if (inherits(value, "data.frame")) {
+    cli::cli_abort(c(x = "To insert a local table to a cdm_reference object use insertTable function."))
+  }
+
+  # check it is lazy table
+  if (!inherits(value, "tbl_lazy")) {
+    cli::cli_abort(c(x = "Can't assign an object of class: {.cls {class(value)}} to a db_con cdm_reference object."))
+  }
+
+  # check it comes from same connection
+  con <- getCon(src)
+  if (!identical(con, dbplyr::remote_con(value))) {
+    cli::cli_abort(c(x = "The cdm object and the table have different connection sources."))
+  }
+
+  # check remote name
+  remoteName <- dbplyr::remote_name(value)
+  if (is.null(remoteName)) {
+    name <- NA_character_
+  } else if (startsWith(remoteName, "dbplyr") | startsWith(remoteName, "og_")) {
+    name <- NA_character_
+  } else {
+    prefix <- getPrefix(src = src, type = "write")
+    name <- substr(remoteName, nchar(prefix) + 1, nchar(remoteName))
+  }
+
+  omopgenerics::newCdmTable(table = value, src = src, name = name)
+}
 
 #' @export
 insertCdmTo.pq_cdm <- function(cdm, to) {
@@ -162,7 +238,7 @@ readSourceTable.pq_cdm <- function(cdm, name) {
 
 dropTable <- function(src, type, name) {
   name <- formatName(src = src, name = name, type = type)
-  st <- paste0("DROP TABLE ", name, ";")
+  st <- paste0("DROP TABLE IF EXISTS ", name, ";")
   DBI::dbExecute(conn = getCon(src = src), statement = st)
 }
 listTables <- function(src, type) {
