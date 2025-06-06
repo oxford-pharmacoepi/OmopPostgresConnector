@@ -8,6 +8,7 @@
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/OmopPostgresConnector-package.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/cancelJob.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/cdmDoc.html</loc></url>
+<url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/copyCdmToPostgres.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/createCdmIndexes.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/createIndexes.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/createTableIndexes.html</loc></url>
@@ -16,6 +17,8 @@
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/existingTableIndexes.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/getJobs.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/index.html</loc></url>
+<url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/localPostgres.html</loc></url>
+<url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/pqSourceDoc.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/reexports.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/tableDoc.html</loc></url>
 </urlset>
