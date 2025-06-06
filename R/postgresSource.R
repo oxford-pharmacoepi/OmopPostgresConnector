@@ -1,4 +1,33 @@
 
+#' This function creates a connection to the local postgres instance
+#'
+#' It relays on environmental variables such as:
+#' * dbname = `OMOP_POSTGRES_CONNECTOR_DB`
+#' * host = `OMOP_POSTGRES_CONNECTOR_HOST`
+#' * port = `OMOP_POSTGRES_CONNECTOR_PORT`
+#' * user = `OMOP_POSTGRES_CONNECTOR_USER`
+#' * password = `OMOP_POSTGRES_CONNECTOR_PASSWORD`
+#'
+#' @return A connection to your postgres local instance
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(OmopPostgresConnector)
+#'
+#' localPostgres()
+#' }
+localPostgres <- function() {
+  DBI::dbConnect(
+    drv = RPostgres::Postgres(),
+    dbname = Sys.getenv("OMOP_POSTGRES_CONNECTOR_DB", "omop_test"),
+    host = Sys.getenv("OMOP_POSTGRES_CONNECTOR_DB", "localhost"),
+    port = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PORT", "5432"),
+    user = Sys.getenv("OMOP_POSTGRES_CONNECTOR_USER", "omop_postgres_connector"),
+    password = Sys.getenv("OMOP_POSTGRES_CONNECTOR_PASSWORD", "omopverse")
+  )
+}
+
 postgresSource <- function(con,
                            cdmSchema = "public",
                            cdmPrefix = "",
@@ -78,26 +107,15 @@ listSourceTables.pq_cdm <- function(cdm) {
 #' @export
 insertCdmTo.pq_cdm <- function(cdm, to) {
   # identify table types
-  tables <- names(cdm)
-  tableType <- purrr::map(tables, \(nm) {
-    cl <- class(cdm[[nm]])
-    dplyr::case_when(
-      "omop_table" %in% class(x) ~ "omop_table",
-      "cohort_table" %in% class(x) ~ "cohort_table",
-      "achilles_table" %in% class(x) ~ "achilles_table",
-      .default = "other_table"
-    )
-  })
+  tables <- cdmTableClasses(cdm)
 
-  # insert cdm tables
-  omopTables <- tables[tableType == "omop_table"]
-  for (nm in omopTables) {
-    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "cdm")
+  # insert omop tables
+  for (nm in tables$omop_tables) {
+    writeTable(src = to, name = nm, value = cdm[[nm]], type = "cdm")
   }
 
   # insert cohort tables
-  cohortTables <- tables[tableType == "cohort_table"]
-  for (nm in cohortTables) {
+  for (nm in tables$cohort_tables) {
     x <- dplyr::collect(cdm[[nm]])
     writeTable(src = to, name = nm, value = x, type = "write")
     writeTable(src = to, name = paste0(nm, "_set"), value = attr(x, "cohort_set"), type = "write")
@@ -106,15 +124,13 @@ insertCdmTo.pq_cdm <- function(cdm, to) {
   }
 
   # insert achilles tables
-  achillesTables <- tables[tableType == "achilles_table"]
-  for (nm in achillesTables) {
-    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "achilles")
+  for (nm in tables$achilles_tables) {
+    writeTable(src = to, name = nm, value = cdm[[nm]], type = "achilles")
   }
 
   # insert other tables
-  otherTables <- tables[tableType == "other_table"]
-  for (nm in otherTables) {
-    writeTable(src = to, name = nm, value = dplyr::collect(cdm[[nm]]), type = "write")
+  for (nm in tables$other_tables) {
+    writeTable(src = to, name = nm, value = cdm[[nm]], type = "write")
   }
 
   cdm <- cdmFromPostgres(
@@ -127,10 +143,10 @@ insertCdmTo.pq_cdm <- function(cdm, to) {
     writePrefix = getPrefix(to, "write"),
     achillesSchema = getSchema(to, "achilles"),
     achillesPrefix = getPrefix(to, "achilles"),
-    cohortTables = cohortTables
+    cohortTables = tables$cohort_tables
   )
 
-  for (nm in otherTables) {
+  for (nm in tables$other_tables) {
     cdm[[nm]] <- readTable(src = to, name = nm, type = "write")
   }
 
@@ -170,7 +186,7 @@ writeTable <- function(src, name, value, type) {
   DBI::dbWriteTable(
     conn = getCon(src),
     name = formatName(src, name, type),
-    value = value
+    value = dplyr::as_tibble(value)
   )
 }
 readTable <- function(src, name, type) {
@@ -221,7 +237,12 @@ assertSchema <- function(con, schema, null, call = parent.frame()) {
   omopgenerics::assertCharacter(schema, length = 1, null = null, call = call)
   if (!is.null(schema)) {
     if (!schemaExists(con, schema)) {
-      cli::cli_abort(c(x = "schema: {.pkg {schema}} does not exist."))
+      if (question("Schema {.pkg {schema}} does not exist. Do you wnat to create it? Y/n")) {
+        cli::cli_inform(c("i" = "Creating schema: {.pkg {schema}}."))
+        createSchema(con, schema)
+      } else {
+        cli::cli_abort(c(x = "schema: {.pkg {schema}} does not exist."))
+      }
     }
   }
   invisible(schema)

@@ -17,3 +17,14 @@ schemaExists <- function(con, schema) {
     dplyr::collect()
   nrow(x) > 0
 }
+question <- function(message, .envir = parent.frame()) {
+  if (!rlang::is_interactive()) return(TRUE)
+  res <- ""
+  while (!res %in% c("yes", "no")) {
+    cli::cli_inform(message = message, .envir = .envir)
+    res <- tolower(readline())
+    res[res == "y"] <- "yes"
+    res[res == "n"] <- "no"
+  }
+  res == "yes"
+}
