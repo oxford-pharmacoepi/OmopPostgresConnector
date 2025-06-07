@@ -2,3 +2,48 @@ url: https://oxford-pharmacoepi.github.io/OmopPostgresConnector/
 template:
   bootstrap: 5
 
+reference:
+  - title: "Create a cdm_reference"
+    contents:
+      - cdmFromPostgres
+
+  - title: "Copy a cdm_reference to a postgres source"
+    contents:
+      - copyCdmToPostgres
+
+  - title: "Job management"
+    desc: "Cancel and manage jobs."
+    contents:
+      - getJobs
+      - cancelJob
+
+  - title: "Index mangement"
+    desc: "Create and check existing indexes."
+    contents:
+      - createIndexes
+      - createTableIndexes
+      - createCdmIndexes
+      - existingIndexes
+      - existingTableIndexes
+      - existingCdmIndexes
+
+  - title: "Create a postgres source object"
+    contents:
+      - postgresSource
+
+  - title: "CDM object managment"
+    desc: "Reexported functions from other packages for the cdm_reference object management."
+    contents:
+      - insertTable
+      - listSourceTables
+      - readSourceTable
+      - dropSourceTable
+      - compute
+      - insertCdmTo
+      - cdmDisconnect
+      - cdmTableFromSource
+
+  - title: "Create a local postgres"
+    desc: "Create a local postgres connection using environmental variables."
+    contents:
+      - localPostgres
