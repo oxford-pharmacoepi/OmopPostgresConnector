@@ -8,6 +8,7 @@
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/OmopPostgresConnector-package.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/cancelJob.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/cdmDoc.html</loc></url>
+<url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/cdmFromPostgres.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/copyCdmToPostgres.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/createCdmIndexes.html</loc></url>
 <url><loc>https://oxford-pharmacoepi.github.io/OmopPostgresConnector/reference/createIndexes.html</loc></url>
