@@ -93,16 +93,13 @@ insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = F
 
 #' @export
 dropSourceTable.pq_cdm <- function(cdm, name) {
-  for (nm in name) {
-    dropTable(src = cdm, type = "write", name = nm)
-  }
-  return(cdm)
+  dropTable(src = cdm, type = "write", name = name)
 }
 
-#' @importFrom dplyr compute
+#' @export
 compute.pq_cdm <- function(x, name, temporary = FALSE, overwrite = TRUE, type = "write", ...) {
   # get source
-  src <- attr(table, "tbl_source")
+  src <- attr(x, "tbl_source")
   con <- getCon(src)
 
   # get rendered sql
@@ -121,6 +118,8 @@ compute.pq_cdm <- function(x, name, temporary = FALSE, overwrite = TRUE, type = 
   if (stringr::str_detect(string = render, pattern = name)) {
     intermediate <- omopgenerics::uniqueTableName()
     sql <- paste0("CREATE TEMP TABLE ", intermediate, " AS ", render, ";")
+    DBI::dbExecute(conn = con, statement = sql)
+    sql <- paste0("DROP TABLE IF EXISTS ", name, ";")
     DBI::dbExecute(conn = con, statement = sql)
     sql <- paste0("CREATE TABLE ", name, " AS SELECT * FROM ", intermediate, ";")
     DBI::dbExecute(conn = con, statement = sql)
@@ -142,8 +141,7 @@ listSourceTables.pq_cdm <- function(cdm) {
 
 #' @export
 cdmDisconnect.pq_cdm <- function(cdm, ...) {
-  src <- omopgenerics::cdmSource(cdm)
-  con <- getCon(src)
+  con <- getCon(cdm)
   DBI::dbDisconnect(conn = con)
   invisible(TRUE)
 }
@@ -156,8 +154,8 @@ cdmTableFromSource.pq_cdm <- function(src, value) {
   }
 
   # check it is lazy table
-  if (!inherits(value, "tbl_lazy")) {
-    cli::cli_abort(c(x = "Can't assign an object of class: {.cls {class(value)}} to a db_con cdm_reference object."))
+  if (!inherits(value, "tbl_PqConnection")) {
+    cli::cli_abort(c(x = "Can't assign an object of class: {.cls {class(value)}} to a pq_cdm cdm_reference object."))
   }
 
   # check it comes from same connection
@@ -237,9 +235,12 @@ readSourceTable.pq_cdm <- function(cdm, name) {
 }
 
 dropTable <- function(src, type, name) {
-  name <- formatName(src = src, name = name, type = type)
-  st <- paste0("DROP TABLE IF EXISTS ", name, ";")
-  DBI::dbExecute(conn = getCon(src = src), statement = st)
+  for (nm in name) {
+    nm <- formatName(src = src, name = nm, type = type)
+    st <- paste0("DROP TABLE IF EXISTS ", nm, ";")
+    DBI::dbExecute(conn = getCon(src = src), statement = st)
+  }
+  invisible(src)
 }
 listTables <- function(src, type) {
   schema <- getSchema(src, type)
@@ -260,9 +261,9 @@ listTables <- function(src, type) {
 }
 writeTable <- function(src, name, value, type) {
   DBI::dbWriteTable(
-    conn = getCon(src),
-    name = IdName(src, name, type),
-    value = dplyr::as_tibble(value)
+    conn = getCon(src = src),
+    name = IdName(src = src, name = name, type = type),
+    value = dplyr::as_tibble(x = value)
   )
 }
 readTable <- function(src, name, type) {
@@ -329,7 +330,4 @@ assertPrefix <- function(prefix, call = parent.frame()) {
     omopgenerics::assertCharacter(prefix, length = 1)
   }
   invisible(prefix)
-}
-conFromSource <- function(x) {
-  attr(x, "pq_con")
 }

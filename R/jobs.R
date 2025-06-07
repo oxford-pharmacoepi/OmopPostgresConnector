@@ -35,7 +35,7 @@ getJobs.cdm_reference <- function(src, user) {
 
 #' @export
 getJobs.pq_cdm <- function(src, user) {
-  getJobs(src = conFromSource(x = src))
+  getJobs(src = getCon(src = src))
 }
 
 #' @export
@@ -72,7 +72,7 @@ cancelJob.cdm_reference <- function(src, pid) {
 
 #' @export
 cancelJob.pq_cdm <- function(src, pid) {
-  cancelJob(src = conFromSource(x = src))
+  cancelJob(src = getCon(src = src))
 }
 
 #' @export

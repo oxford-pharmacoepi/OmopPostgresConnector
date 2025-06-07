@@ -21,6 +21,7 @@ Imports:
     stringr
 Suggests: 
     knitr,
+    omock,
     rmarkdown,
     RPostgres,
     testthat (>= 3.0.0)

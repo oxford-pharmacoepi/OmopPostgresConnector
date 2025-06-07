@@ -26,3 +26,7 @@ omopgenerics::cdmDisconnect
 #' @importFrom omopgenerics cdmTableFromSource
 #' @export
 omopgenerics::cdmTableFromSource
+
+#' @importFrom dplyr compute
+#' @export
+dplyr::compute
