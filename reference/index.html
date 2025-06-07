@@ -34,7 +34,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="create-a-cdm-reference">Create a cdm_reference<a class="anchor" aria-label="anchor" href="#create-a-cdm-reference"></a></h2>
 
 
 
@@ -46,29 +46,62 @@
 
       <dl><dt>
 
-          <code><a href="cancelJob.html">cancelJob()</a></code>
-
-        </dt>
-        <dd>Cancel a Postgres job.</dd>
-      </dl><dl><dt>
-
           <code><a href="cdmFromPostgres.html">cdmFromPostgres()</a></code>
 
         </dt>
         <dd>Create a &lt;cdm_reference&gt; object from a postgres connection</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="copy-a-cdm-reference-to-a-postgres-source">Copy a cdm_reference to a postgres source<a class="anchor" aria-label="anchor" href="#copy-a-cdm-reference-to-a-postgres-source"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="copyCdmToPostgres.html">copyCdmToPostgres()</a></code>
 
         </dt>
         <dd>Copy a cdm (independently of its source) to a</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="job-management">Job management<a class="anchor" aria-label="anchor" href="#job-management"></a></h2>
 
-          <code><a href="createCdmIndexes.html">createCdmIndexes()</a></code>
+      <div class="section-desc"><p>Cancel and manage jobs.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="getJobs.html">getJobs()</a></code>
 
         </dt>
-        <dd>Title</dd>
+        <dd>Get ongoing Postgres jobs.</dd>
       </dl><dl><dt>
+
+          <code><a href="cancelJob.html">cancelJob()</a></code>
+
+        </dt>
+        <dd>Cancel a Postgres job.</dd>
+      </dl></div><div class="section level2">
+      <h2 id="index-mangement">Index mangement<a class="anchor" aria-label="anchor" href="#index-mangement"></a></h2>
+
+      <div class="section-desc"><p>Create and check existing indexes.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="createIndexes.html">createIndexes()</a></code>
 
@@ -82,10 +115,10 @@
         <dd>Title</dd>
       </dl><dl><dt>
 
-          <code><a href="existingCdmIndexes.html">existingCdmIndexes()</a></code>
+          <code><a href="createCdmIndexes.html">createCdmIndexes()</a></code>
 
         </dt>
-        <dd>Identify the existing indexes in the tables of a &lt;cdm_reference&gt; object.</dd>
+        <dd>Title</dd>
       </dl><dl><dt>
 
           <code><a href="existingIndexes.html">existingIndexes()</a></code>
@@ -100,24 +133,64 @@
         <dd>Title</dd>
       </dl><dl><dt>
 
-          <code><a href="getJobs.html">getJobs()</a></code>
+          <code><a href="existingCdmIndexes.html">existingCdmIndexes()</a></code>
 
         </dt>
-        <dd>Get ongoing Postgres jobs.</dd>
-      </dl><dl><dt>
+        <dd>Identify the existing indexes in the tables of a &lt;cdm_reference&gt; object.</dd>
+      </dl></div><div class="section level2">
+      <h2 id="create-a-postgres-source-object">Create a postgres source object<a class="anchor" aria-label="anchor" href="#create-a-postgres-source-object"></a></h2>
 
-          <code><a href="localPostgres.html">localPostgres()</a></code>
 
-        </dt>
-        <dd>This function creates a connection to the local postgres instance</dd>
-      </dl><dl><dt>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="postgresSource.html">postgresSource()</a></code>
 
         </dt>
         <dd>Create a postgres source object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="cdm-object-managment">CDM object managment<a class="anchor" aria-label="anchor" href="#cdm-object-managment"></a></h2>
+
+      <div class="section-desc"><p>Reexported functions from other packages for the cdm_reference object management.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="reexports.html">reexports</a></code> <code><a href="reexports.html">listSourceTables</a></code> <code><a href="reexports.html">insertTable</a></code> <code><a href="reexports.html">dropSourceTable</a></code> <code><a href="reexports.html">insertCdmTo</a></code> <code><a href="reexports.html">readSourceTable</a></code> <code><a href="reexports.html">cdmDisconnect</a></code> <code><a href="reexports.html">cdmTableFromSource</a></code> <code><a href="reexports.html">compute</a></code>
+
+        </dt>
+        <dd>Objects exported from other packages</dd>
+      </dl></div><div class="section level2">
+      <h2 id="create-a-local-postgres">Create a local postgres<a class="anchor" aria-label="anchor" href="#create-a-local-postgres"></a></h2>
+
+      <div class="section-desc"><p>Create a local postgres connection using environmental variables.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="localPostgres.html">localPostgres()</a></code>
+
+        </dt>
+        <dd>This function creates a connection to the local postgres instance</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
