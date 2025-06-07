@@ -261,7 +261,7 @@ listTables <- function(src, type) {
 writeTable <- function(src, name, value, type) {
   DBI::dbWriteTable(
     conn = getCon(src),
-    name = formatName(src, name, type),
+    name = IdName(src, name, type),
     value = dplyr::as_tibble(value)
   )
 }
@@ -291,13 +291,12 @@ getPrefix <- function(src, type) {
   }
 }
 formatName <- function(src, name, type) {
-  if (type == "cdm") {
-    paste0(getSchema(src, "cdm"), ".", getPrefix(src, "cdm"), name)
-  } else if (type == "write") {
-    paste0(getSchema(src, "write"), ".", getPrefix(src, "write"), name)
-  } else if (type == "achilles") {
-    paste0(getSchema(src, "achilles"), ".", getPrefix(src, "achilles"), name)
-  }
+  paste0(getSchema(src, type), ".", getPrefix(src, type), name)
+}
+IdName <- function(src, name, type) {
+  schema <- getSchema(src, type)
+  name <- paste0(getPrefix(src, type), name)
+  DBI::Id(schema = schema, name = name)
 }
 assertCon <- function(con, call = parent.frame()) {
   if (!inherits(con, "PqConnection")) {
@@ -313,7 +312,7 @@ assertSchema <- function(con, schema, null, call = parent.frame()) {
   omopgenerics::assertCharacter(schema, length = 1, null = null, call = call)
   if (!is.null(schema)) {
     if (!schemaExists(con, schema)) {
-      if (question("Schema {.pkg {schema}} does not exist. Do you wnat to create it? Y/n")) {
+      if (question("Schema {.pkg {schema}} does not exist. Do you want to create it? Y/n")) {
         cli::cli_inform(c("i" = "Creating schema: {.pkg {schema}}."))
         createSchema(con, schema)
       } else {
