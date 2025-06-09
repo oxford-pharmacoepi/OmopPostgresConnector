@@ -6,20 +6,23 @@ test_that("check postgres source", {
   expect_true(inherits(con, "PqConnection"))
 
   # create postgres source
-  expect_no_error(src <- postgresSource(con = con))
+  expect_no_error(src <- postgresSource(
+    con = con,
+    cdmPrefix = "pg_cdm",
+    writePrefix = "pg_write",
+    achillesSchema = "results",
+    achillesPrefix = "pg_achilles"
+  ))
 
   # copy cdm to postgres
-  cdm <- omock::mockCdmFromDataset(datasetName = "GiBleed")
+  cdm <- omock::mockCdmFromDataset(datasetName = "GiBleed") |>
+    omock::mockCohort() |>
+    omopgenerics::emptyAchillesTable(name = "achilles_analysis") |>
+    omopgenerics::emptyAchillesTable(name = "achilles_results") |>
+    omopgenerics::emptyAchillesTable(name = "achilles_results_dist")
+  cdm$my_random_table <- dplyr::tibble(person_id = 1L, value = "xyz")
   expect_no_error(pq_cdm <- insertCdmTo(cdm = cdm, to = src))
 
-  # drop all created tables
-  ls <- listTables(src = src, type = "cdm")
-  expect_no_error(dropTable(src = src, type = "cdm", name = ls))
-  ls <- listTables(src = src, type = "write")
-  expect_no_error(dropTable(src = src, type = "write", name = ls))
-  ls <- listTables(src = src, type = "achilles")
-  expect_no_error(dropTable(src = src, type = "achilles", name = ls))
-
   # disconnect
-  expect_no_error(cdmDisconnect(cdm = pq_cdm))
+  expect_no_error(dropCdm(cdm = pq_cdm))
 })

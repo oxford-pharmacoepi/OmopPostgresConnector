@@ -80,7 +80,7 @@ insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = F
 
   # check overwrite
   if (overwrite & name %in% listTables(src = cdm, type = "write")) {
-    dropTable(src = cdm, type = "write", name = name)
+    dropTable(src = cdm, type = "write", name = name, callFrom = "insert_table")
   }
 
   # write table
@@ -93,45 +93,54 @@ insertTable.pq_cdm <- function(cdm, name, table, overwrite = TRUE, temporary = F
 
 #' @export
 dropSourceTable.pq_cdm <- function(cdm, name) {
-  dropTable(src = cdm, type = "write", name = name)
+  dropTable(src = cdm, type = "write", name = name, callFrom = "drop_table")
 }
 
 #' @export
-compute.pq_cdm <- function(x, name, temporary = FALSE, overwrite = TRUE, type = "write", ...) {
+compute.pq_cdm <- function(x, name, temporary = FALSE, overwrite = TRUE, type = "write", logPrefix = NULL, jobName = NULL, ...) {
   # get source
   src <- attr(x, "tbl_source")
   con <- getCon(src)
 
+  # find job name
+  if (!is.null(jobName)) {
+    jobName <- paste0(jobName, collapse = "; ")
+  } else if (!is.null(logPrefix)) {
+    jobName <- paste0(logPrefix, collapse = "; ")
+  } else {
+    jobName <- paste0("COMPUTE TABLE ", name)
+  }
+
   # get rendered sql
   render <- as.character(dbplyr::sql_render(x))
 
-  # check if table must be temporary or permanent
   if (temporary) {
+    type <- "temp"
     name <- omopgenerics::uniqueTableName()
-    temp <- " TEMP"
-  } else {
-    name <- formatName(src = src, name = name, type = type)
-    temp <- ""
   }
 
-  # check if intermediate table is needed
-  if (stringr::str_detect(string = render, pattern = name)) {
+  ls <- listTables(src = src, type = type)
+
+  formattedName <- formatName(src = src, name = name, type = type)
+  if (stringr::str_detect(string = render, pattern = formattedName)) {
+    # compute into intermediate table
+    jn <- paste0(jobName, " into temp intermediate")
     intermediate <- omopgenerics::uniqueTableName()
-    sql <- paste0("CREATE TEMP TABLE ", intermediate, " AS ", render, ";")
-    DBI::dbExecute(conn = con, statement = sql)
-    sql <- paste0("DROP TABLE IF EXISTS ", name, ";")
-    DBI::dbExecute(conn = con, statement = sql)
-    sql <- paste0("CREATE TABLE ", name, " AS SELECT * FROM ", intermediate, ";")
-    DBI::dbExecute(conn = con, statement = sql)
-    sql <- paste0("DROP TABLE IF EXISTS ", intermediate, ";")
-    DBI::dbExecute(conn = con, statement = sql)
+    computeTable(src = src, type = "temp", name = intermediate, sql = render, jobName = jn)
+    # delete blocking table
+    dropTable(src = src, type = type, name = name, callFrom = "compute")
+    # compute intermediate to final destination
+    jn <- paste0(jobName, " from temp intermediate")
+    sql <- paste0("SELECT * FROM ", formatName(src = src, name = intermediate, type = "temp"), ";")
+    computeTable(src = src, type = type, name = name, sql = sql, jobName = jn)
+    # delete intermediate table
+    dropTable(src = src, type = "temp", name = intermediate, callFrom = "compute")
   } else {
-    sql <- paste0("CREATE", temp, " TABLE ", name, " AS ", render, ";")
-    DBI::dbExecute(conn = con, statement = sql)
+    computeTable(src = src, type = type, name = name, sql = render, jobName = jobName)
   }
 
   # reference final table
-  dplyr::tbl(con, I(name))
+  readTable(src = src, name = name, type = type)
 }
 
 #' @export
@@ -234,42 +243,127 @@ readSourceTable.pq_cdm <- function(cdm, name) {
   readTable(src = cdm, name = name, type = "write")
 }
 
-dropTable <- function(src, type, name) {
+computeTable <- function(src, type, name, sql, jobName) {
+  # create sql
+  name <- formatName(src = src, name = name, type = type)
+  temp <- ifelse(type == "temp", " TEMP", "")
+  sql <- paste0("CREATE", temp, " TABLE ", name, " AS ", sql, ";")
+
+  # whether to log
+  toLog <- logSql()
+
+  # create log file
+  if (toLog) {
+    logName <- startLogger(
+      jobName = jobName,
+      jobType = "compute",
+      sql = extractSql(sql = sql),
+      explain = extractExplain(src = src, sql = sql)
+    )
+  }
+
+  # finish logger
+  if (toLog) {
+    # analyse will also run the query
+    analyse <- extractAnalyse(src = src, sql)
+    finishLogger(logName = logName, analyse = analyse)
+  } else {
+    DBI::dbExecute(conn = getCon(src = src), statement = sql)
+  }
+
+  invisible(TRUE)
+}
+dropTable <- function(src, type, name, callFrom = "drop_table") {
   for (nm in name) {
+    # create sql
     nm <- formatName(src = src, name = nm, type = type)
     st <- paste0("DROP TABLE IF EXISTS ", nm, ";")
+
+    # whether to log
+    toLog <- logSql()
+
+    # create log file
+    if (toLog) {
+      logName <- startLogger(
+        jobName = paste0("DROP TABLE ", nm, " (", type, ")"),
+        jobType = "drop_table",
+        callFrom = callFrom,
+        sql = extractSql(sql = st),
+        explain = NA_character_
+      )
+    }
+
+    # drop table
     DBI::dbExecute(conn = getCon(src = src), statement = st)
+
+    # finish logger
+    if (toLog) {
+      finishLogger(logName = logName, analyse = NA_character_)
+    }
   }
-  invisible(src)
+
+  invisible(TRUE)
 }
 listTables <- function(src, type) {
   schema <- getSchema(src, type)
+  if (schema == "") {
+    st <- "SELECT tablename FROM pg_tables WHERE schemaname LIKE 'pg_temp%';"
+  } else {
+    st <- paste0("SELECT tablename FROM pg_tables WHERE schemaname = '", schema, "';")
+  }
+  x <- DBI::dbGetQuery(conn = getCon(src), statement = st)$tablename
   prefix <- getPrefix(src, type)
-  st <- paste0(
-    "SELECT table_name
-    FROM information_schema.tables
-    WHERE table_schema = '", schema, "'",
-    ifelse(prefix == "", ";", paste0(" AND table_name LIKE '", prefix, "%';"))
-  )
-  x <- DBI::dbGetQuery(conn = getCon(src), statement = st)$table_name
   if (prefix != "") {
     x <- x |>
+      purrr::keep(\(x) startsWith(x = x, prefix = prefix)) |>
       stringr::str_replace(pattern = paste0("^", prefix), replacement = "") |>
       purrr::keep(\(x) nchar(x) > 0)
   }
   return(x)
 }
 writeTable <- function(src, name, value, type) {
+  # whether to log
+  toLog <- logSql()
+
+  # start logger
+  if (toLog) {
+    con <- getCon(src = src)
+    cols <- value |>
+      purrr::imap(\(x, nm) paste0(nm, " ", DBI::dbDataType(dbObj = con, x))) |>
+      paste0(collapse = ", ")
+    nm <- formatName(src = src, name = name, type = type)
+    sql <- paste0(
+      "CREATE", ifelse(type == "temp", " TEMP", ""), " TABLE ", nm, " (", cols,
+      ");"
+    )
+    logName <- startLogger(
+      jobName = paste("INSERT IN", nm, "A TIBBLE WITH", nrow(value), "ROWS"),
+      jobType = "insert_table",
+      sql = extractSql(sql = sql),
+      explain = NA_character_
+    )
+  }
+
+  # insert table
   DBI::dbWriteTable(
     conn = getCon(src = src),
     name = IdName(src = src, name = name, type = type),
-    value = dplyr::as_tibble(x = value)
+    value = dplyr::as_tibble(x = value),
+    temporary = type == "temp"
   )
+
+  # finish logger
+  if (toLog) {
+    finishLogger(logName = logName, analyse = NA_character_)
+  }
+
+  invisible(TRUE)
 }
 readTable <- function(src, name, type) {
   dplyr::tbl(src = getCon(src), I(formatName(src, name, type))) |>
     omopgenerics::newCdmTable(src = src, name = name)
 }
+
 getCon <- function(src) {
   attr(src, "pq_con")
 }
@@ -280,6 +374,8 @@ getSchema <- function(src, type) {
     attr(src, "write_schema")
   } else if (type == "achilles") {
     attr(src, "achilles_schema")
+  } else if (type == "temp") {
+    ""
   }
 }
 getPrefix <- function(src, type) {
@@ -289,15 +385,26 @@ getPrefix <- function(src, type) {
     attr(src, "write_prefix")
   } else if (type == "achilles") {
     attr(src, "achilles_prefix")
+  } else if (type == "temp") {
+    ""
   }
 }
 formatName <- function(src, name, type) {
-  paste0(getSchema(src, type), ".", getPrefix(src, type), name)
+  schema <- getSchema(src, type)
+  if (schema == "") {
+    paste0(getPrefix(src, type), name)
+  } else {
+    paste0(schema, ".", getPrefix(src, type), name)
+  }
 }
 IdName <- function(src, name, type) {
   schema <- getSchema(src, type)
   name <- paste0(getPrefix(src, type), name)
-  DBI::Id(schema = schema, name = name)
+  if (schema == "") {
+    DBI::Id(name = name)
+  } else {
+    DBI::Id(schema = schema, name = name)
+  }
 }
 assertCon <- function(con, call = parent.frame()) {
   if (!inherits(con, "PqConnection")) {
@@ -311,7 +418,14 @@ assertCon <- function(con, call = parent.frame()) {
 }
 assertSchema <- function(con, schema, null, call = parent.frame()) {
   omopgenerics::assertCharacter(schema, length = 1, null = null, call = call)
-  if (!is.null(schema)) {
+  emptySchema <- is.null(schema) | identical(schema, "")
+  if (emptySchema) {
+    if (null) {
+      schema <- ""
+    } else {
+      cli::cli_abort(c(x = "Schema must be defined."))
+    }
+  } else {
     if (!schemaExists(con, schema)) {
       if (question("Schema {.pkg {schema}} does not exist. Do you want to create it? Y/n")) {
         cli::cli_inform(c("i" = "Creating schema: {.pkg {schema}}."))

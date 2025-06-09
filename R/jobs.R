@@ -24,22 +24,22 @@
 # cdm <- cdmFromPostgres(con = con)
 # getJobs(cdm)
 #
-getJobs <- function(src, user) {
+getJobs <- function(src, user = NULL) {
   UseMethod("getJobs")
 }
 
 #' @export
-getJobs.cdm_reference <- function(src, user) {
-  getJobs(src = omopgenerics::cdmSource(x = src))
+getJobs.cdm_reference <- function(src, user = NULL) {
+  getJobs(src = omopgenerics::cdmSource(x = src), user  = user)
 }
 
 #' @export
-getJobs.pq_cdm <- function(src, user) {
-  getJobs(src = getCon(src = src))
+getJobs.pq_cdm <- function(src, user = NULL) {
+  getJobs(src = getCon(src = src), user = user)
 }
 
 #' @export
-getJobs.PqConnection <- function(src, user) {
+getJobs.PqConnection <- function(src, user = NULL) {
   omopgenerics::assertCharacter(user, null = TRUE)
 
   x <- dplyr::tbl(src, I("pg_stat_activity"))
@@ -62,17 +62,17 @@ getJobs.PqConnection <- function(src, user) {
 #' @export
 #'
 cancelJob <- function(src, pid) {
-  UseMethod("killJob")
+  UseMethod("cancelJob")
 }
 
 #' @export
 cancelJob.cdm_reference <- function(src, pid) {
-  cancelJob(src = omopgenerics::cdmSource(x = src))
+  cancelJob(src = omopgenerics::cdmSource(x = src), pid = pid)
 }
 
 #' @export
 cancelJob.pq_cdm <- function(src, pid) {
-  cancelJob(src = getCon(src = src))
+  cancelJob(src = getCon(src = src), pid = pid)
 }
 
 #' @export

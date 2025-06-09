@@ -98,7 +98,7 @@ existingTableIndexes <- function(table) {
     schema <- rnm[1]
     name <- rnm[2]
   } else {
-    schema <- DBI::dbGetQuery(con, "SELECT current_schema();")$current_schem
+    schema <- DBI::dbGetQuery(con, "SELECT current_schema();")$current_schema
     name <- rnm
   }
   return(getIndexes(con = con, schema = schema, table = name))

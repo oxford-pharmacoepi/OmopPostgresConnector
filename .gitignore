@@ -49,3 +49,4 @@ po/*~
 rsconnect/
 docs
 inst/doc
+log_query*

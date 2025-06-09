@@ -27,14 +27,16 @@ copyCdmToPostgres <- function(cdm,
                               achillesPrefix = "") {
   # initial checks
   cdm <- omopgenerics::validateCdmArgument(cdm = cdm)
-  tables <- cdmTableClasses(cdm)
+  tables <- cdmTableClasses(cdm = cdm)
   con <- assertCon(con = con)
-  cdmSchema <- assertSchema(cdmSchema)
-  cdmPrefix <- assertPrefix(cdmPrefix)
-  writeSchema <- assertSchema(writeSchema, null = length(c(tables$cohort_tables, tables$other_tables)) == 0)
-  writeSchema <- assertPrefix(writeSchema)
-  achillesSchema <- assertSchema(achillesSchema, null = length(tables$achilles_tables) == 0)
-  achillesPrefix <- assertPrefix(achillesPrefix)
+  cdmSchema <- assertSchema(con = con, schema = cdmSchema)
+  cdmPrefix <- assertPrefix(prefix = cdmPrefix)
+  nullWrite <- length(c(tables$cohort_tables, tables$other_tables)) == 0
+  writeSchema <- assertSchema(con = con, schema = writeSchema, null = nullWrite)
+  writeSchema <- assertPrefix(prefix = writeSchema)
+  nullAch <- length(tables$achilles_tables) == 0
+  achillesSchema <- assertSchema(con = con, schema = achillesSchema, null = nullAch)
+  achillesPrefix <- assertPrefix(prefix = achillesPrefix)
 
   # create postgres source
   src <- postgresSource(

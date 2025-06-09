@@ -55,29 +55,30 @@ cdmFromPostgres <- function(con,
   lt <- listTables(src = src, type = "write")
   sp <- getSchemaPrefix(src = src, type = "write")
   for (ct in cohortTables) {
-    if (ct %in% lt) {
+    if (!ct %in% lt) {
       cli::cli_inform(c("!" = "{.cls cohort_table} {.strong {ct}} not present in `{.emph {sp}}`."))
+    } else {
+      nms <- paste0(ct, c("", "_set", "_attrition", "_codelist"))
+      x <- nms |>
+        rlang::set_names() |>
+        as.list() |>
+        purrr::map(\(nm) {
+          if (nm %in% lt) {
+            readTable(src = src, name = nm, type = "write")
+          } else {
+            NULL
+          }
+        })
+      # need to separate in two steps so it gets the cdm attribute
+      cdm[[ct]] <- x[[1]]
+      cdm[[ct]] <- omopgenerics::newCohortTable(
+        table = cdm[[ct]],
+        cohortSetRef = x[[2]],
+        cohortAttritionRef = x[[3]],
+        cohortCodelistRef = x[[4]],
+        .softValidation = !validation
+      )
     }
-    nms <- paste0(ct, c("", "_set", "_attrition", "_codelist"))
-    x <- nms |>
-      rlang::set_names() |>
-      as.list() |>
-      purrr::map(\(nm) {
-        if (nm %in% lt) {
-          readTable(src = src, name = nm, type = "write")
-        } else {
-          NULL
-        }
-      })
-    # need to separate in two steps so it gets the cdm attribute
-    cdm[[ct]] <- x[[1]]
-    cdm[[ct]] <- omopgenerics::newCohortTable(
-      table = cdm[[ct]],
-      cohortSetRef = x[[2]],
-      cohortAttritionRef = x[[3]],
-      cohortCodelistRef = x[[4]],
-      .softValidation = !validation
-    )
   }
 
   # read achilles tables
