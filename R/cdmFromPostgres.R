@@ -47,9 +47,10 @@ cdmFromPostgres <- function(con,
   if (is.null(cdmName)) {
     if ("cdm_source" %in% names(cdm)) {
       if ("cdm_source_name" %in% colnames(cdm$cdm_source)) {
-        cdmSourceName <- cdm[["source_name"]] |>
+        cdmSourceName <- cdm[["cdm_source"]] |>
           dplyr::pull("cdm_source_name")
         if (length(cdmSourceName) == 1) {
+          cli::cli_inform(c(i = "Reading `cdmName` from {.pkg cdm_source}: '{cdmSourceName}'."))
           cdmName <- cdmSourceName
         }
       }
