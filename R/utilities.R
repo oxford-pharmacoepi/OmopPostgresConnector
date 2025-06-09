@@ -1,8 +1,4 @@
 
-currentDatabase <- function(con) {
-  DBI::dbGetQuery(conn = con, statement = "SELECT current_database();") |>
-    dplyr::pull("current_database")
-}
 createSchema <- function(con, schema) {
   DBI::dbExecute(conn = con, statement = paste0("CREATE SCHEMA ", schema))
   invisible(con)
