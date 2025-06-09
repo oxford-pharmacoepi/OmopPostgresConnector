@@ -44,6 +44,17 @@ cdmFromPostgres <- function(con,
     rlang::set_names() |>
     as.list() |>
     purrr::map(\(x) readTable(src = src, name = x, type = "cdm"))
+  if (is.null(cdmName)) {
+    if ("cdm_source" %in% names(cdm)) {
+      if ("cdm_source_name" %in% colnames(cdm$cdm_source)) {
+        cdmSourceName <- cdm[["source_name"]] |>
+          dplyr::pull("cdm_source_name")
+        if (length(cdmSourceName) == 1) {
+          cdmName <- cdmSourceName
+        }
+      }
+    }
+  }
   cdm <- omopgenerics::newCdmReference(
     tables = tables,
     cdmName = cdmName,

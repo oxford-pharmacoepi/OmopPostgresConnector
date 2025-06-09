@@ -49,20 +49,21 @@ existingCdmIndexes <- function(cdm) {
   # get src
   src <- omopgenerics::cdmSource(cdm)
   con <- getCon(src)
+  x <- cdmTableClasses(cdm = cdm)
 
   # get cdm_schema indexes
   schema <- getSchema(src, "cdm")
-  nms <- formatName(src, names(cdm), "cdm")
+  nms <- paste0(getPrefix(src, "cdm"), x$omop_tables)
   idx_cdm <- getIndexes(con = con, schema = schema, table = nms)
 
   # get write_schema indexes
   schema <- getSchema(src, "write")
-  nms <- formatName(src, names(cdm), "write")
+  nms <- paste0(getPrefix(src, "write"), c(x$cohort_tables, x$other_tables))
   idx_write <- getIndexes(con = con, schema = schema, table = nms)
 
   # get achilles_schema indexes
   schema <- getSchema(src, "achilles")
-  nms <- formatName(src, names(cdm), "achilles")
+  nms <- paste0(getPrefix(src, "write"), x$achilles_tables)
   idx_achilles <- getIndexes(con = con, schema = schema, table = nms)
 
   dplyr::bind_rows(idx_cdm, idx_write, idx_achilles)
