@@ -1,5 +1,6 @@
 test_that("logging works", {
   skip_on_cran()
+  expect_message(readPostgresLog())
   folder <- file.path(tempdir(), "logging")
   expect_no_error(postgresLog(path = folder, sql = T, explain = T, analyse = T))
   con <- localPostgres()
@@ -8,6 +9,6 @@ test_that("logging works", {
   ))
   expect_true(length(list.files(path = folder)) >= 6)
   expect_no_error(logInfo <- readPostgresLog())
-  postgresLog(NULL, F, F, F)
+  expect_message(postgresLog(NULL, F, F, F))
   DBI::dbDisconnect(conn = con)
 })
