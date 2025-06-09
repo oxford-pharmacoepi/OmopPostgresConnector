@@ -4,7 +4,7 @@
 \alias{getJobs}
 \title{Get ongoing Postgres jobs.}
 \usage{
-getJobs(src, user)
+getJobs(src, user = NULL)
 }
 \arguments{
 \item{src}{It can either be a cdm_reference, a postgres_source or a

@@ -11,6 +11,11 @@ reference:
     contents:
       - copyCdmToPostgres
 
+  - title: "Create and read logging files"
+    contents:
+      - postgresLog
+      - readPostgresLog
+
   - title: "Job management"
     desc: "Cancel and manage jobs."
     contents:
