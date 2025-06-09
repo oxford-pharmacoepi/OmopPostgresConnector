@@ -19,11 +19,12 @@ postgresLog <- function(path,
   omopgenerics::assertLogical(analyse, length = 1)
   if (isFALSE(sql) & isFALSE(explain) & isFALSE(analyse)) {
     cli::cli_inform(c("!" = "Deactivating logging as `sql`, `explain` and `analyse` are {.pkg FALSE}."))
+    path <- NULL
   } else {
     path <- validatePath(path = path)
-    setLogPath(path)
   }
 
+  setLogPath(path)
   setLogSql(sql)
   setLogExplain(explain)
   setLogAnalyse(analyse)
@@ -50,7 +51,7 @@ readPostgresLog <- function() {
   if (!dir.exists(logPath)) {
     cli::cli_inform(c(
       "!" = "{.var logPath} is not defined.",
-      "i" = "Please use {.pkg startPostgresLog()} to create a log path."
+      "i" = "Please use {.pkg postgresLog()} to create a log path."
     ))
     x <- dplyr::tibble()
   } else {
