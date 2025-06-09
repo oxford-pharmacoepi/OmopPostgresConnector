@@ -426,7 +426,6 @@ assertSchema <- function(con, schema, null, call = parent.frame()) {
       cli::cli_abort(c(x = "Schema must be defined."))
     }
   } else {
-    if (is.null(schema))
     if (!schemaExists(con, schema)) {
       if (question("Schema {.pkg {schema}} does not exist. Do you want to create it? Y/n")) {
         cli::cli_inform(c("i" = "Creating schema: {.pkg {schema}}."))

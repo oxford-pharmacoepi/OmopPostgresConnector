@@ -9,21 +9,21 @@
 #' @return Invisible path.
 #' @export
 #'
-startPostgresLog <- function(path,
-                             sql = TRUE,
-                             explain = TRUE,
-                             analyse = FALSE) {
+postgresLog <- function(path,
+                        sql = TRUE,
+                        explain = TRUE,
+                        analyse = FALSE) {
   # input check
-  path <- validatePath(path = path)
   omopgenerics::assertLogical(sql, length = 1)
   omopgenerics::assertLogical(explain, length = 1)
   omopgenerics::assertLogical(analyse, length = 1)
-
   if (isFALSE(sql) & isFALSE(explain) & isFALSE(analyse)) {
     cli::cli_inform(c("!" = "Deactivating logging as `sql`, `explain` and `analyse` are {.pkg FALSE}."))
+  } else {
+    path <- validatePath(path = path)
+    setLogPath(path)
   }
 
-  setLogPath(path)
   setLogSql(sql)
   setLogExplain(explain)
   setLogAnalyse(analyse)

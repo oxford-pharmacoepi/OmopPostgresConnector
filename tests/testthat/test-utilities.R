@@ -1,5 +1,5 @@
 test_that("create schema", {
-  con <- testCon()
+  con <- localPostgres()
   expect_false(schemaExists(con = con, schema = "test_schema"))
   expect_no_error(createSchema(con = con, schema = "test_schema"))
   expect_true(schemaExists(con = con, schema = "test_schema"))
