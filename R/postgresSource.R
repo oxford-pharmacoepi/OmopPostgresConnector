@@ -401,9 +401,9 @@ IdName <- function(src, name, type) {
   schema <- getSchema(src, type)
   name <- paste0(getPrefix(src, type), name)
   if (schema == "") {
-    DBI::Id(name = name)
+    DBI::Id(table = name)
   } else {
-    DBI::Id(schema = schema, name = name)
+    DBI::Id(schema = schema, table = name)
   }
 }
 assertCon <- function(con, call = parent.frame()) {
