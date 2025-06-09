@@ -9,7 +9,10 @@ dropCdm <- function(cdm) {
   dropTable(src = src, type = "cdm", name = x$omop_tables)
 
   # drop write tables
-  dropTable(src = src, type = "write", name = c(x$cohort_tables, x$other_tables))
+  cohort_tables <- x$cohort_tables |>
+    purrr::map(\(x) paste0(x, c("", "_set", "_attrition", "_codelist"))) |>
+    unlist()
+  dropTable(src = src, type = "write", name = c(cohort_tables, x$other_tables))
 
   # drop achilles tables
   dropTable(src = src, type = "achilles", name = x$achilles_tables)

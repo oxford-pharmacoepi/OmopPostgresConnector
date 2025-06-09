@@ -6,7 +6,13 @@ test_that("check postgres source", {
   expect_true(inherits(con, "PqConnection"))
 
   # create postgres source
-  expect_no_error(src <- postgresSource(con = con))
+  expect_no_error(src <- postgresSource(
+    con = con,
+    cdmPrefix = "pg_cdm",
+    writePrefix = "pg_write",
+    achillesSchema = "results",
+    achillesPrefix = "pg_achilles"
+  ))
 
   # copy cdm to postgres
   cdm <- omock::mockCdmFromDataset(datasetName = "GiBleed") |>
