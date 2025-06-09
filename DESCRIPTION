@@ -28,6 +28,6 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 
-    R (>= 2.10)
+    R (>= 4.1)
 Remotes:
     ohdsi/omock
