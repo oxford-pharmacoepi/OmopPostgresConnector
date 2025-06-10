@@ -10,17 +10,29 @@ cdmIndexes <- readLines("https://raw.githubusercontent.com/OHDSI/CommonDataModel
     )
   }) |>
   dplyr::bind_rows() |>
-  dplyr::mutate(index_schema = "cdm")
+  dplyr::mutate(index_schema = "cdm", table_class = "omop_table")
 
 cohortIndexes <- dplyr::tribble(
-  ~index_name, ~index_table, ~index_schema, ~index,
-  "{index_table}_cdi_si_csd", "cohort", "write", "cohort_definition_id, subject_id, cohort_start_date"
+  ~index_name, ~index_table, ~index_schema, ~index, ~table_class,
+  "{index_table}_cdi_si_csd", "-", "write", "cohort_definition_id, subject_id, cohort_start_date", "cohort_table"
 )
 
 achillesIndexes <- dplyr::tribble(
-  ~index_name, ~index_table, ~index_schema, ~index,
-  "idx_achilles_results_analysis_id", "achilles_results", "achilles", "analysis_id",
-  "idx_achilles_results_dist_analysis_id", "achilles_results_dist", "achilles", "analysis_id"
+  ~index_name, ~index_table, ~index_schema, ~index, ~table_class,
+  "idx_achilles_results_analysis_id", "achilles_results", "achilles", "analysis_id", "achilles_table",
+  "idx_achilles_results_dist_analysis_id", "achilles_results_dist", "achilles", "analysis_id", "achilles_table"
 )
 
-usethis::use_data(cdmIndexes, cohortIndexes, achillesIndexes, internal = TRUE, overwrite = TRUE)
+otherIndexes <- dplyr::tribble(
+  ~index_name, ~index_table, ~index_schema, ~index, ~table_class,
+  "{index_table}_subject_id", "-", "write", "subject_id", "other_table",
+  "{index_table}_person_id", "-", "write", "person_id", "other_table",
+  "{index_table}_<prefix>_concept_id", "-", "write", "<prefix>_concept_id", "other_table"
+)
+
+expectedIdx <- cdmIndexes |>
+  dplyr::union_all(cohortIndexes) |>
+  dplyr::union_all(achillesIndexes) |>
+  dplyr::union_all(otherIndexes)
+
+usethis::use_data(expectedIdx, internal = TRUE, overwrite = TRUE)

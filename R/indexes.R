@@ -1,5 +1,5 @@
 
-#' Title
+#' Create the cdm
 #'
 #' @inheritParams cdmDoc
 #'
@@ -119,7 +119,7 @@ existingIndexes <- function(x, schema = NULL, tableName = NULL) {
   if (inherits(x, "cdm_reference") | inherits(x, "cdm_table")) {
     x <- omopgenerics::cdmSource(x)
   }
-  if (inherits("pq_cdm")) {
+  if (inherits(x, "pq_cdm")) {
     x <- getCon(x)
   }
   if (!inherits(x, "PqConnection")) {
@@ -131,6 +131,62 @@ existingIndexes <- function(x, schema = NULL, tableName = NULL) {
 
   # get indexes
   getIndexes(con = con, schema = schema, table = tableName)
+}
+
+#' Create the cdm
+#'
+#' @inheritParams cdmDoc
+#'
+#' @return The cdm object.
+#' @export
+#'
+checkCdmIndexes <- function(cdm) {
+  # initial checks
+  cdm <- omopgenerics::validateCdmArgument(cdm = cdm)
+
+  # get existing indexes
+  src <- omopgenerics::cdmSource(x = cdm)
+  con <- getCon(src =)
+  idx <- getIndexes(con = con, schema = schema, table = tableName)
+
+
+}
+
+checkTableIndexes <- function(table) {
+
+}
+
+checkIndexes <- function(x, schema = NULL, tableName = NULL) {
+
+}
+
+expectedCdmIndexes <- function(cdm) {
+  # input check
+  cdm <- omopgenerics::validateCdmArgument(cdm = cdm)
+
+
+}
+
+expectedTableIndexes <- function(table) {
+
+}
+
+expectedIndexes <- function(x, schema, tableName) {
+
+}
+
+expectedIndex <- function(tableName, tableClass, columns) {
+  expIdx <- expectedIdx |>
+    dplyr::filter(.data$table_class == .env$tableClass)
+  if (tableClass %in% c("omop_table", "achilles_table")) {
+    expIdx <- expIdx |>
+      dplyr::filter(.data$index_table == .env$tableName)
+  } else if (tableClass == "cohort_table") {
+
+  } else if (tableClass == "other_table") {
+
+  }
+  expIdx
 }
 
 emptyIndexesMatrix <- function() {
