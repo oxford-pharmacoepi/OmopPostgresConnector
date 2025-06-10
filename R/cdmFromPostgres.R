@@ -45,9 +45,9 @@ cdmFromPostgres <- function(con,
     as.list() |>
     purrr::map(\(x) readTable(src = src, name = x, type = "cdm"))
   if (is.null(cdmName)) {
-    if ("cdm_source" %in% names(cdm)) {
-      if ("cdm_source_name" %in% colnames(cdm$cdm_source)) {
-        cdmSourceName <- cdm[["cdm_source"]] |>
+    if ("cdm_source" %in% names(tables)) {
+      if ("cdm_source_name" %in% colnames(tables$cdm_source)) {
+        cdmSourceName <- tables$cdm_source |>
           dplyr::pull("cdm_source_name")
         if (length(cdmSourceName) == 1) {
           cli::cli_inform(c(i = "Reading `cdmName` from {.pkg cdm_source}: '{cdmSourceName}'."))
